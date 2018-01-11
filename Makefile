@@ -1,11 +1,11 @@
 IDIR =../include
 CC=gcc
-CFLAGS=-I$(IDIR)
+CFLAGS=-I$(IDIR) -g
 
 ODIR=src
 LDIR =../lib
 
-LIBS=-lncurses
+LIBS=-lmenu -lncurses
 
 _DEPS = 
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))

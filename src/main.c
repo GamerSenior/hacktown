@@ -3,14 +3,19 @@
 #include <ncurses.h>
 #include <string.h>
 #include <unistd.h>
+#include <menu.h>
 
 #define WIDTH 30
 #define HEIGHT 10
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
 void configuracoes();
 void inicializaTela();
 void menuInicial(WINDOW *menu_win, int selecao);
 void inputControl();
+
+int startx = 0;
+int starty = 0;
 
 char *opcoesMenu[] = {
     "Novo Jogo",
@@ -18,19 +23,43 @@ char *opcoesMenu[] = {
     "Créditos",
     "Sair",
 };
-int n_opcoes = sizeof(opcoesMenu) / sizeof( char *);
 
 int main(){
-    WINDOW* menu_win;
-    int selecao = 1;
-    int escolha = 0;
+    //WINDOW* menu_win;
+    ITEM **itens;
     int c;
+    MENU *menu;
+    int n_escolhas, i;
+    ITEM *item_atual;
 
-    menu_win = newwin(HEIGHT, WIDTH, 0, 0);
+    inicializaTela();
 
-    inicializaTela(); 
-    menuInicial(menu_win, selecao);
-    getch();
+    n_escolhas = ARRAY_SIZE(opcoesMenu);
+    itens = (ITEM **)calloc(n_escolhas, sizeof(ITEM *));
+
+    for(i = 0; i < n_escolhas; ++i){
+        itens[i] = new_item(opcoesMenu[i], "");
+    }
+    itens[n_escolhas] = (ITEM *)NULL;
+
+    menu = new_menu((ITEM **) itens);
+    mvprintw(LINES - 2, 0, "Q para Sair");
+    post_menu(menu);
+    refresh();
+
+    while((c = getch()) != 'q'){
+        switch(c){
+            case KEY_DOWN:
+                menu_driver(menu, REQ_DOWN_ITEM);
+                break;
+            case KEY_UP:
+                menu_driver(menu, REQ_UP_ITEM);
+                break;
+        }
+    }
+    free_item(itens[0]);
+    free_item(itens[1]);
+    free_menu(menu);
 
     //Finaliza o modo curses e libera a memoria
     endwin();
@@ -54,8 +83,9 @@ void configuracoes(){
     }else{
         printw("Arquivo de configurações lido com sucesso!");
     }
-    refresh();    
-    sleep(5);
+    refresh();
+    getch();
+    clear();
 }
 
 void inicializaTela(){
@@ -63,13 +93,15 @@ void inicializaTela(){
     initscr();
     configuracoes();
     //raw();
-    //noecho();
+    noecho();
+
+    //Buffer de linha desligado
     cbreak();
     
     //Libera a utilização de teclas funcionais como F1, F2 e setas
     keypad(stdscr, TRUE);
 }
-
+/*
 void menuInicial(WINDOW *menu_win, int selecao){
     clear();
     int x, y, i;
@@ -90,13 +122,10 @@ void menuInicial(WINDOW *menu_win, int selecao){
         ++y;
     }
     wrefresh(menu_win);
-
-
-
     //Atualiza a tela (stdscr) com novos dados    
-    refresh();
     getch();
 }
+*/
 
 void inputControl(){
 
