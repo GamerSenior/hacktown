@@ -5,7 +5,7 @@ CFLAGS=-I$(IDIR) -g
 ODIR=src
 LDIR =../lib
 
-LIBS=-lmenu -lncurses
+LIBS=-lmenu -lncurses -lpthread
 
 _DEPS = 
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))

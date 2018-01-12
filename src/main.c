@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <menu.h>
+#include <pthread.h>
 
 #define WIDTH 30
 #define HEIGHT 10
@@ -12,7 +13,7 @@
 void configuracoes();
 void inicializaTela();
 void menuInicial(WINDOW *menu_win, int selecao);
-void inputControl();
+void *inputControl(void *data);
 
 int startx = 0;
 int starty = 0;
@@ -20,7 +21,7 @@ int starty = 0;
 char *opcoesMenu[] = {
     "Novo Jogo",
     "Continuar",
-    "Créditos",
+    "Creditos",
     "Sair",
 };
 
@@ -31,6 +32,8 @@ int main(){
     MENU *menu;
     int n_escolhas, i;
     ITEM *item_atual;
+    bool gameRunning = false;
+    pthread_t tid;
 
     inicializaTela();
 
@@ -47,7 +50,7 @@ int main(){
     post_menu(menu);
     refresh();
 
-    while((c = getch()) != 'q'){
+    while((c = getch()) != 'q' && !gameRunning){
         switch(c){
             case KEY_DOWN:
                 menu_driver(menu, REQ_DOWN_ITEM);
@@ -55,11 +58,31 @@ int main(){
             case KEY_UP:
                 menu_driver(menu, REQ_UP_ITEM);
                 break;
+            case 10:
+                if(current_item(menu) == itens[0]){
+                    gameRunning = true;
+                }            
+                break;
+            case KEY_LEFT:
+                set_current_item(menu, itens[0]);
+                break;
         }
     }
-    free_item(itens[0]);
-    free_item(itens[1]);
+
+    pthread_create(&tid, NULL, inputControl,(void*)c);
+    while(gameRunning){
+        clear();
+        
+        mvprintw(LINES - 2, 0, "%c Wubba Lubba Dub Dub", c);
+        refresh();
+    }
+
+    //Libera a memoria alocada pelo menu
+    unpost_menu(menu);
     free_menu(menu);
+    for(i = 0; i < n_escolhas; ++i){
+        free_item(itens[i]);
+    }
 
     //Finaliza o modo curses e libera a memoria
     endwin();
@@ -101,32 +124,8 @@ void inicializaTela(){
     //Libera a utilização de teclas funcionais como F1, F2 e setas
     keypad(stdscr, TRUE);
 }
-/*
-void menuInicial(WINDOW *menu_win, int selecao){
-    clear();
-    int x, y, i;
-    x = 2;
-    y = 2;
-    box(menu_win, 0, 0);
 
-    mvwprintw(menu_win, 0, 2, "HackTown version 0.1\n");
-    
-    for(i = 0; i < n_opcoes; ++i){
-        if(selecao == i + 1){
-            wattron(menu_win, A_REVERSE);
-            mvwprintw(menu_win, y, x, "%s", opcoesMenu[i]);
-            wattroff(menu_win, A_REVERSE);
-        }else{
-            mvwprintw(menu_win, y, x, "%s", opcoesMenu[i]);
-        }
-        ++y;
-    }
-    wrefresh(menu_win);
-    //Atualiza a tela (stdscr) com novos dados    
-    getch();
-}
-*/
-
-void inputControl(){
-
+void *inputControl(void *data){
+    int c = (intptr_t) data;
+    printw("%c", c);
 }
